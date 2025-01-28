@@ -1,67 +1,69 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
-import SKUCard from "@/components/SKUCard"
-import { Button } from "@/components/ui/button"
-//import FileSaver from "file-saver"
-//import * as XLSX from "xlsx"
+import { useState, useEffect } from "react";
+import { useParams } from "next/navigation"; // Correct hook for dynamic route params
+import { fetchSkusByCompanyId } from "../../actions/fetchSkus"; // Import server action
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface SKU {
-  id: number
-  name: string
-  batchNumber: string
-  quantity: number
-  createdAt: string
-}
+export default function DashboardPage() {
+  const [selectedCompanySkus, setSelectedCompanySkus] = useState<{ id: number; sku_name: string }[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const params = useParams(); // Use this to extract route parameters
 
-export default function SKUList() {
-  const [skus, setSKUs] = useState<SKU[]>([])
-  const searchParams = useSearchParams()
-  const company = searchParams.get("company")
+  // Extract companyId from the params
+  const companyId = params.companyId;
 
   useEffect(() => {
-    // In a real application, you would fetch the SKUs from your API here
-    setSKUs([
-      { id: 1, name: "SKU 1", batchNumber: "", quantity: 0, createdAt: "" },
-      { id: 2, name: "SKU 2", batchNumber: "", quantity: 0, createdAt: "" },
-      { id: 3, name: "SKU 3", batchNumber: "", quantity: 0, createdAt: "" },
-    ])
-  }, [])
+    const loadCompanySkus = async () => {
+      if (companyId) {
+        try {
+          // Call the server-side action to fetch the SKUs for the selected company
+          const result = await fetchSkusByCompanyId(Number(companyId));
 
-  const handleSKUUpdate = (updatedSKU: SKU) => {
-    setSKUs(skus.map((sku) => (sku.id === updatedSKU.id ? updatedSKU : sku)))
-  }
+          if (result.success) {
+            // Ensure the data is in the correct format before updating state
+            const skus = result.skus?.map(skuData => ({
+              id: skuData.sku.id,    // Map SKU data correctly
+              sku_name: skuData.sku.sku_name,
+            })) || []; // Default to an empty array if undefined
 
-  {/*const handleDownloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(
-      skus.map((sku) => ({
-        "Company Name": company,
-        SKU: sku.name,
-        "Batch Number": sku.batchNumber,
-        "Batch Quantity": sku.quantity,
-        "Created At": sku.createdAt,
-      })),
-    )
-    const workbook = XLSX.utils.book_new()
-    XLSX.utils.book_append_sheet(workbook, worksheet, "SKUs")
-    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" })
-    const data = new Blob([excelBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
-    FileSaver.saveAs(data, "sku_list.xlsx")
-  }*/}
+            setSelectedCompanySkus(skus); // Set the SKUs in state
+          } else {
+            setError(result.error ?? "An unknown error occurred");
+          }
+        } catch (error) {
+          setError("Failed to fetch SKUs");
+        }
+      }
+    };
+
+    loadCompanySkus();
+  }, [companyId]); // Re-run the effect when companyId changes
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">SKU List for {company}</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {skus.map((sku) => (
-          <SKUCard key={sku.id} sku={sku} onUpdate={handleSKUUpdate} />
-        ))}
-      </div>
-      {/*<Button onClick={handleDownloadExcel} className="mt-4">
-        Download Excel
-      </Button>*/}
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <Card className="w-[350px]">
+        <CardHeader>
+          <CardTitle>SKU List for Company {companyId}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {error && <p className="text-red-500 text-center">{error}</p>}
+          {selectedCompanySkus && selectedCompanySkus.length > 0 ? (
+            <div>
+              <h3 className="text-xl font-semibold">SKUs for this Company:</h3>
+              <ul className="mt-2">
+                {selectedCompanySkus.map((sku) => (
+                  <li key={sku.id} className="py-1">
+                    {sku.sku_name}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-center">No SKUs available for this company</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
-
