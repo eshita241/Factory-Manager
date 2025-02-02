@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 export default function CompanyList() {
   const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter(); // Access Next.js router to navigate between pages
+  const router = useRouter();
 
   useEffect(() => {
     const loadCompanies = async () => {
