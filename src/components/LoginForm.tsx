@@ -22,7 +22,7 @@ export default function LoginForm() {
       const result = await loginUser(username, password);
 
       if (result.success) {
-        router.push("/dashboard/[id]"); // Redirect on success
+        router.push("/dashboard"); // Redirect on success
       } else {
         setError(result.error || "Invalid credentials"); // Handle error
       }
