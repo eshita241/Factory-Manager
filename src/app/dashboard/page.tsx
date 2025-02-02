@@ -1,29 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { fetchCompanies } from "../actions/fetchCompanies";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 export default function CompanyList() {
-  const [companies, setCompanies] = useState<{ id: number; name: string }[]>([]);
+  const [companies] = useState<{ id: number; name: string }[]>([
+    { id: 1, name: "Red Cow" },
+    { id: 2, name: "Modern" }
+  ]);
+
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    const loadCompanies = async () => {
-      const result = await fetchCompanies();
-
-      if (result.success) {
-        setCompanies(result.companies ?? []);
-      } else {
-        setError("Failed to load companies");
-      }
-    };
-
-    loadCompanies();
-  }, []);
 
   const handleCompanyClick = (companyId: number) => {
     // Navigate to the dashboard page with company ID in the URL

@@ -15,6 +15,12 @@ interface SKU {
   createdAt: string; // Date and Time combined
 }
 
+interface Company {
+  id: number;
+  name: string;
+  skus: SKU[];
+}
+
 interface SKUCardProps {
   sku: SKU;
   onUpdate: (sku: SKU) => void;
@@ -68,11 +74,27 @@ function SKUCard({ sku, onUpdate }: SKUCardProps) {
 }
 
 export default function DashboardPage() {
-  const [skus, setSkus] = useState<SKU[]>([
-    { id: 1, name: "200gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
-    { id: 2, name: "400gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
-    { id: 3, name: "Whole Wheat Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
-  ]);
+  const companies: Company[] = [
+    {
+      id: 1,
+      name: "Red Cow",
+      skus: [
+        { id: 1, name: "200gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 2, name: "400gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+      ],
+    },
+    {
+      id: 2,
+      name: "Modern",
+      skus: [
+        { id: 3, name: "Whole Wheat Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 4, name: "Multigrain Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+      ],
+    },
+  ];
+
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [skus, setSkus] = useState<SKU[]>([]);
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
@@ -113,6 +135,14 @@ export default function DashboardPage() {
     }
   };
 
+  const handleCompanySelect = (companyId: number) => {
+    setSelectedCompanyId(companyId);
+    const selectedCompany = companies.find((company) => company.id === companyId);
+    if (selectedCompany) {
+      setSkus(selectedCompany.skus);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4 space-y-4">
       {showLogin && (
@@ -137,6 +167,21 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      <div className="space-y-2">
+        <Label>Select Company</Label>
+        <select
+          value={selectedCompanyId || ""}
+          onChange={(e) => handleCompanySelect(Number(e.target.value))}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">-- Select Company --</option>
+          {companies.map((company) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
+        </select>
+      </div>
       <Button onClick={handleDownloadExcel} className="mb-4 bg-green-500 hover:bg-green-600">
         Download as Excel
       </Button>

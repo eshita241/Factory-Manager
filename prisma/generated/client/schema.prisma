@@ -1,0 +1,52 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+model Company {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  companySkus CompanySku[]
+}
+
+model Sku {
+  id       Int    @id @default(autoincrement())
+  sku_name String
+
+  companySkus CompanySku[]
+}
+
+model BatchNum {
+  id       Int @id @default(autoincrement())
+  quantity Int
+
+  companySkuBatches CompanySkuBatchNumRelation[]
+}
+
+model CompanySku {
+  id         Int @id @default(autoincrement()) // Added an ID field for CompanySku
+  company_id Int
+  sku_id     Int
+
+  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  sku     Sku     @relation(fields: [sku_id], references: [id], onDelete: Cascade)
+
+  companySkuBatches CompanySkuBatchNumRelation[]
+}
+
+model CompanySkuBatchNumRelation {
+  company_sku_id Int
+  batch_id       Int
+  created_at     DateTime @default(now())
+
+  companySku CompanySku @relation(fields: [company_sku_id], references: [id])
+  batchNum   BatchNum   @relation(fields: [batch_id], references: [id])
+
+  @@id([company_sku_id, batch_id]) // Composite Primary Key
+}
