@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import * as XLSX from "xlsx";
 
 interface SKU {
   id: number;
@@ -77,8 +78,27 @@ export default function DashboardPage() {
     setSkus((prevSkus) => prevSkus.map((sku) => (sku.id === updatedSKU.id ? updatedSKU : sku)));
   };
 
+  const handleDownloadExcel = () => {
+    const data = skus.map(({ id, name, batchNumber, quantity, createdAt }) => ({
+      ID: id,
+      Name: name,
+      "Batch Number": batchNumber,
+      Quantity: quantity,
+      "Last Updated": createdAt ? new Date(createdAt).toLocaleString() : "Not Updated",
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "SKUs");
+
+    XLSX.writeFile(workbook, "SKU_Data.xlsx");
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4 space-y-4">
+      <Button onClick={handleDownloadExcel} className="mb-4 bg-green-500 hover:bg-green-600">
+        Download as Excel
+      </Button>
       <div className="space-y-4">
         {skus.map((sku) => (
           <SKUCard key={sku.id} sku={sku} onUpdate={handleUpdate} />
