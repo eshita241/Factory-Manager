@@ -12,7 +12,7 @@ interface SKU {
   name: string;
   batchNumber: string;
   quantity: number;
-  createdAt: string;
+  createdAt: string; // Date and Time combined
 }
 
 interface SKUCardProps {
@@ -30,7 +30,7 @@ function SKUCard({ sku, onUpdate }: SKUCardProps) {
       ...sku,
       batchNumber: newBatchNumber,
       quantity,
-      createdAt: new Date().toISOString(),
+      createdAt: new Date().toLocaleString(), // Adds both date and time
     };
     onUpdate(updatedSKU);
   };
@@ -59,7 +59,7 @@ function SKUCard({ sku, onUpdate }: SKUCardProps) {
         </Button>
         {sku.createdAt && (
           <p className="text-sm text-gray-500">
-            Last updated: {new Date(sku.createdAt).toLocaleString()}
+            Last updated: {sku.createdAt} {/* Displaying date and time */}
           </p>
         )}
       </CardContent>
@@ -69,22 +69,32 @@ function SKUCard({ sku, onUpdate }: SKUCardProps) {
 
 export default function DashboardPage() {
   const [skus, setSkus] = useState<SKU[]>([
-    { id: 1, name: "200gm Sliced Bread", batchNumber: "B001", quantity: 50, createdAt: "" },
-    { id: 2, name: "400gm Sliced Bread", batchNumber: "B002", quantity: 30, createdAt: "" },
-    { id: 3, name: "Whole Wheat Bread", batchNumber: "B003", quantity: 20, createdAt: "" },
+    { id: 1, name: "200gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+    { id: 2, name: "400gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+    { id: 3, name: "Whole Wheat Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
   ]);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showLogin, setShowLogin] = useState(false);
 
   const handleUpdate = (updatedSKU: SKU) => {
     setSkus((prevSkus) => prevSkus.map((sku) => (sku.id === updatedSKU.id ? updatedSKU : sku)));
   };
 
   const handleDownloadExcel = () => {
+    if (!isLoggedIn) {
+      setShowLogin(true);
+      return;
+    }
+
     const data = skus.map(({ id, name, batchNumber, quantity, createdAt }) => ({
       ID: id,
       Name: name,
       "Batch Number": batchNumber,
       Quantity: quantity,
-      "Last Updated": createdAt ? new Date(createdAt).toLocaleString() : "Not Updated",
+      "Last Updated": createdAt ? createdAt : "Not Updated", // Use formatted date-time
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -94,8 +104,39 @@ export default function DashboardPage() {
     XLSX.writeFile(workbook, "SKU_Data.xlsx");
   };
 
+  const handleLogin = () => {
+    if (username === "admin" && password === "password123") {
+      setIsLoggedIn(true);
+      setShowLogin(false);
+    } else {
+      alert("Invalid username or password");
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4 space-y-4">
+      {showLogin && (
+        <div className="flex flex-col items-center p-4 border rounded-lg shadow-md bg-white">
+          <h2 className="text-xl mb-4">Admin Login</h2>
+          <div className="space-y-4">
+            <Input
+              type="text"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+            <Input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <Button onClick={handleLogin} className="w-full bg-blue-500 hover:bg-blue-600">
+              Login
+            </Button>
+          </div>
+        </div>
+      )}
       <Button onClick={handleDownloadExcel} className="mb-4 bg-green-500 hover:bg-green-600">
         Download as Excel
       </Button>
