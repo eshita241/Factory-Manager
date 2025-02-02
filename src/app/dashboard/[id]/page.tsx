@@ -81,14 +81,17 @@ export default function DashboardPage() {
       skus: [
         { id: 1, name: "200gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
         { id: 2, name: "400gm Sliced Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 3, name: "laccha bun", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 4, name: "Sweet Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 5, name: "Brown Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
       ],
     },
     {
       id: 2,
       name: "Modern",
       skus: [
-        { id: 3, name: "Whole Wheat Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
-        { id: 4, name: "Multigrain Bread", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 6, name: "Sliced bread 200gm", batchNumber: "B000", quantity: 0, createdAt: "" },
+        { id: 7, name: "Sliced Bread 400gm", batchNumber: "B000", quantity: 0, createdAt: "" },
       ],
     },
   ];
