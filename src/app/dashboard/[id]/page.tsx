@@ -1,69 +1,89 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useParams } from "next/navigation"; // Correct hook for dynamic route params
-import { fetchSkusByCompanyId } from "../../actions/fetchSkus"; // Import server action
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
-export default function DashboardPage() {
-  const [selectedCompanySkus, setSelectedCompanySkus] = useState<{ id: number; sku_name: string }[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const params = useParams(); // Use this to extract route parameters
+interface SKU {
+  id: number;
+  name: string;
+  batchNumber: string;
+  quantity: number;
+  createdAt: string;
+}
 
-  // Extract companyId from the params
-  const companyId = params.companyId;
+interface SKUCardProps {
+  sku: SKU;
+  onUpdate: (sku: SKU) => void;
+}
 
-  useEffect(() => {
-    const loadCompanySkus = async () => {
-      if (companyId) {
-        try {
-          // Call the server-side action to fetch the SKUs for the selected company
-          const result = await fetchSkusByCompanyId(Number(companyId));
+function SKUCard({ sku, onUpdate }: SKUCardProps) {
+  const [quantity, setQuantity] = useState(sku.quantity);
 
-          if (result.success) {
-            // Ensure the data is in the correct format before updating state
-            const skus = result.skus?.map(skuData => ({
-              id: skuData.sku.id,    // Map SKU data correctly
-              sku_name: skuData.sku.sku_name,
-            })) || []; // Default to an empty array if undefined
+  const handleSave = () => {
+    const newBatchNumber = `B${String(parseInt(sku.batchNumber.replace(/\D/g, "")) + 1).padStart(3, "0")}`;
 
-            setSelectedCompanySkus(skus); // Set the SKUs in state
-          } else {
-            setError(result.error ?? "An unknown error occurred");
-          }
-        } catch (error) {
-          setError("Failed to fetch SKUs");
-        }
-      }
+    const updatedSKU = {
+      ...sku,
+      batchNumber: newBatchNumber,
+      quantity,
+      createdAt: new Date().toISOString(),
     };
-
-    loadCompanySkus();
-  }, [companyId]); // Re-run the effect when companyId changes
+    onUpdate(updatedSKU);
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <Card className="w-[350px]">
-        <CardHeader>
-          <CardTitle>SKU List for Company {companyId}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {error && <p className="text-red-500 text-center">{error}</p>}
-          {selectedCompanySkus && selectedCompanySkus.length > 0 ? (
-            <div>
-              <h3 className="text-xl font-semibold">SKUs for this Company:</h3>
-              <ul className="mt-2">
-                {selectedCompanySkus.map((sku) => (
-                  <li key={sku.id} className="py-1">
-                    {sku.sku_name}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-center">No SKUs available for this company</p>
-          )}
-        </CardContent>
-      </Card>
+    <Card>
+      <CardHeader>
+        <CardTitle>{sku.name}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Batch Number</Label>
+          <Input value={sku.batchNumber} readOnly className="bg-gray-200 cursor-not-allowed" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor={`quantity-${sku.id}`}>Quantity</Label>
+          <Input
+            id={`quantity-${sku.id}`}
+            type="number"
+            value={quantity}
+            onChange={(e) => setQuantity(Number(e.target.value))}
+          />
+        </div>
+        <Button onClick={handleSave} className="w-full">
+          Save
+        </Button>
+        {sku.createdAt && (
+          <p className="text-sm text-gray-500">
+            Last updated: {new Date(sku.createdAt).toLocaleString()}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function DashboardPage() {
+  const [skus, setSkus] = useState<SKU[]>([
+    { id: 1, name: "200gm Sliced Bread", batchNumber: "B001", quantity: 50, createdAt: "" },
+    { id: 2, name: "400gm Sliced Bread", batchNumber: "B002", quantity: 30, createdAt: "" },
+    { id: 3, name: "Whole Wheat Bread", batchNumber: "B003", quantity: 20, createdAt: "" },
+  ]);
+
+  const handleUpdate = (updatedSKU: SKU) => {
+    setSkus((prevSkus) => prevSkus.map((sku) => (sku.id === updatedSKU.id ? updatedSKU : sku)));
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="space-y-4">
+        {skus.map((sku) => (
+          <SKUCard key={sku.id} sku={sku} onUpdate={handleUpdate} />
+        ))}
+      </div>
     </div>
   );
 }
