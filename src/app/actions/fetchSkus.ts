@@ -1,23 +1,31 @@
+// src/actions/fetchSkus.ts
 'use server';
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export const fetchSkusByCompanyId = async (companyId: number) => {
+export async function fetchSkus(companyId: number) {
   try {
+    await prisma.$connect(); // Ensure connection
     const skus = await prisma.companySku.findMany({
       where: {
         company_id: companyId,
       },
       include: {
-        sku: true, // Including the related SKU data
+        sku: true,
+        companySkuBatches: {
+          include: {
+            batchNum: true,
+          },
+        },
       },
     });
-
     return { success: true, skus };
   } catch (error) {
     console.error("Error fetching SKUs:", error);
-    return { success: false, error: "Error fetching SKUs" };
+    return { success: false, error: "Failed to fetch SKUs", skus: [] };
+  } finally {
+    await prisma.$disconnect();
   }
-};
+}
