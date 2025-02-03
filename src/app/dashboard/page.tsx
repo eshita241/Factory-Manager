@@ -16,7 +16,6 @@ export default function CompanyList() {
   const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
   const [updatedBatches, setUpdatedBatches] = useState<Map<number, number>>(new Map());
   const [savedBatches, setSavedBatches] = useState<any[]>([]); // State to store saved batches
-  const [batchNumber, setBatchNumber] = useState<number>(0); // Track the batch number
 
   useEffect(() => {
     const loadCompanies = async () => {
@@ -54,13 +53,14 @@ export default function CompanyList() {
       const result = await saveBatch(companySkuId, quantity);
       if (result.success) {
         alert('Batch saved successfully!');
-        // Update the batch number after a successful save
-        setBatchNumber((prevBatchNumber) => prevBatchNumber + 1);
-        
+
+        // Get the next batch number for the specific SKU
+        const newBatchNumber = (savedBatches.filter(batch => batch.sku_id === companySkuId).length + 1);
+
         // Add the new batch to the savedBatches state
         setSavedBatches((prevBatches) => [
           ...prevBatches,
-          { sku_id: companySkuId, quantity, batch_number: batchNumber, timestamp: new Date().toISOString() }
+          { sku_id: companySkuId, quantity, batch_number: newBatchNumber, timestamp: new Date().toISOString() }
         ]);
       } else {
         alert('Error saving batch');
@@ -126,28 +126,34 @@ export default function CompanyList() {
               {skus.length === 0 ? (
                 <p className="text-center">No SKUs available for the selected company</p>
               ) : (
-                skus.map((sku) => (
-                  <Card key={sku.id} className="mb-4">
-                    <CardHeader>
-                      <CardTitle>{sku.sku.sku_name}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription>Batch Number: {batchNumber}</CardDescription> {/* Display dynamic batch number */}
-                      <CardDescription>SKU Code: {sku.sku.sku_code}</CardDescription>
-                      <CustomQuantityInput
-                        value={updatedBatches.get(sku.id) ?? 0} // Use the value from updatedBatches map
-                        onChange={(quantity) => handleQuantityChange(sku.id, quantity)} // Update the batch quantity
-                        className="w-full mt-2"
-                      />
-                      <Button
-                        className="w-full mt-4"
-                        onClick={() => handleSaveBatchForSku(sku.id)} // Pass batch number when saving
-                      >
-                        Save Batch
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))
+                skus.map((sku) => {
+                  // Get the batch number for the current SKU
+                  const skuBatches = savedBatches.filter(batch => batch.sku_id === sku.id);
+                  const batchNumber = skuBatches.length ? skuBatches[skuBatches.length - 1].batch_number + 1 : 1;
+
+                  return (
+                    <Card key={sku.id} className="mb-4">
+                      <CardHeader>
+                        <CardTitle>{sku.sku.sku_name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <CardDescription>Batch Number: {batchNumber}</CardDescription> {/* Display dynamic batch number */}
+                        <CardDescription>SKU Code: {sku.sku.sku_code}</CardDescription>
+                        <CustomQuantityInput
+                          value={updatedBatches.get(sku.id) ?? 0} // Use the value from updatedBatches map
+                          onChange={(quantity) => handleQuantityChange(sku.id, quantity)} // Update the batch quantity
+                          className="w-full mt-2"
+                        />
+                        <Button
+                          className="w-full mt-4"
+                          onClick={() => handleSaveBatchForSku(sku.id)} // Pass batch number when saving
+                        >
+                          Save Batch
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  );
+                })
               )}
             </div>
           )}
