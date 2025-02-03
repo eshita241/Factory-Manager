@@ -5,7 +5,7 @@ import { createSKU } from '../../actions/createSKU';
 
 export default function CreateSKUComponent() {
   const [skuName, setSkuName] = useState('Sliced Bread 200gm');
-  const [companyId, setCompanyId] = useState(2); // Example company ID
+  const [companyId, setCompanyId] = useState(1); // Example company ID
   const [response, setResponse] = useState<{ success: boolean; sku?: any; error?: string } | null>(null);
 
   useEffect(() => {
@@ -59,3 +59,58 @@ export default function CreateSKUComponent() {
     </div>
   );
 }
+
+{/*"use client"
+
+import { useEffect, useState } from "react";
+import { createCompany } from "../../actions/createCompany";
+
+interface CompanyResponse {
+  success: boolean;
+  company?: {
+    id: number;
+    name: string;
+  };
+  error?: string;
+}
+
+export default function CreateCompanyClient() {
+  const [companyName, setCompanyName] = useState("Modern"); // Default name
+  const [response, setResponse] = useState<CompanyResponse | null>(null);
+
+  useEffect(() => {
+    const createNewCompany = async () => {
+      try {
+        const result = await createCompany(companyName);
+        setResponse(result);
+      } catch (error) {
+        console.error("Error creating company:", error);
+        setResponse({ success: false, error: "Unexpected error occurred" });
+      }
+    };
+
+    createNewCompany();
+  }, [companyName]); // Trigger when companyName changes
+
+  return (
+    <div className="p-4 bg-gray-100 rounded-xl shadow-md">
+      <h1 className="text-xl font-semibold mb-2">Create Company</h1>
+      <input
+        type="text"
+        value={companyName}
+        onChange={(e) => setCompanyName(e.target.value)}
+        className="border p-2 rounded w-full mb-4"
+        placeholder="Enter company name"
+      />
+      {response && (
+        <div
+          className={`p-3 rounded ${response.success ? "bg-green-200" : "bg-red-200"}`}
+        >
+          {response.success
+            ? `Company Created: ${response.company?.name}`
+            : `Error: ${response.error}`}
+        </div>
+      )}
+    </div>
+  );
+}*/}
