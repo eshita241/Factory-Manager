@@ -4,8 +4,8 @@ import { useEffect, useState } from 'react';
 import { createSKU } from '../../actions/createSKU'; 
 
 export default function CreateSKUComponent() {
-  const [skuName, setSkuName] = useState('Sliced Bread 200gm');
-  const [companyId, setCompanyId] = useState(1); // Example company ID
+  const [skuName, setSkuName] = useState('Cream Bun Vanilla');
+  const [companyId, setCompanyId] = useState(15); // Example company ID
   const [response, setResponse] = useState<{ success: boolean; sku?: any; error?: string } | null>(null);
 
   useEffect(() => {

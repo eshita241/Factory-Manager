@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx'; // Import XLSX for file generation
+import * as XLSX from 'xlsx';
 import { fetchCompanies } from '../actions/fetchCompanies';
 import { fetchSkus } from '../actions/fetchSkus';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { saveBatch } from '../actions/saveBatch';
+import { handleExcelDownload } from '../actions/generateExcel';
 import CustomQuantityInput from "@/components/customQuantityInput"; // Import the custom input
 
 export default function CompanyList() {
@@ -20,6 +21,8 @@ export default function CompanyList() {
   useEffect(() => {
     const loadCompanies = async () => {
       const result = await fetchCompanies();
+
+      console.log(result)
 
       if (result.success) {
         setCompanies(result.companies ?? []);
@@ -53,20 +56,20 @@ export default function CompanyList() {
       const result = await saveBatch(companySkuId, quantity);
       if (result.success) {
         alert('Batch saved successfully!');
-
-        // Get the next batch number for the specific SKU
-        const newBatchNumber = (savedBatches.filter(batch => batch.sku_id === companySkuId).length + 1);
-
-        // Add the new batch to the savedBatches state
+        const newBatchNumber = result.batchNumber; // Use the batch number returned by the server
+  
+        // Update your state with the new batch number
         setSavedBatches((prevBatches) => [
           ...prevBatches,
-          { sku_id: companySkuId, quantity, batch_number: newBatchNumber, timestamp: new Date().toISOString() }
+          { sku_id: companySkuId, quantity, batch_number: newBatchNumber }
         ]);
       } else {
         alert('Error saving batch');
       }
     }
   };
+  
+  
 
   const handleCompanyClick = (companyId: number) => {
     setSelectedCompanyId(companyId);
@@ -76,26 +79,21 @@ export default function CompanyList() {
     setUpdatedBatches(new Map(updatedBatches.set(companySkuId, quantity)));
   };
 
-  const handleDownload = () => {
-    if (savedBatches.length === 0) {
-      alert('No batches to download');
-      return;
+  const handleDownload = async () => {
+    if (selectedCompanyId !== null) {
+      const excelFile = await handleExcelDownload(selectedCompanyId); // Get the buffer
+      const blob = new Blob([excelFile], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'saved_batches.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     }
+  }
 
-    const ws = XLSX.utils.json_to_sheet(savedBatches); // Convert saved batches to sheet
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Saved Batches');
-    const file = XLSX.write(wb, { bookType: 'xlsx', type: 'buffer' });
-
-    const blob = new Blob([file], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'saved_batches.xlsx';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -127,9 +125,8 @@ export default function CompanyList() {
                 <p className="text-center">No SKUs available for the selected company</p>
               ) : (
                 skus.map((sku) => {
-                  // Get the batch number for the current SKU
                   const skuBatches = savedBatches.filter(batch => batch.sku_id === sku.id);
-                  const batchNumber = skuBatches.length ? skuBatches[skuBatches.length - 1].batch_number + 1 : 1;
+                  const batchNumber = skuBatches.length ? Math.max(...skuBatches.map(batch => batch.batch_number)) + 1 : 1;
 
                   return (
                     <Card key={sku.id} className="mb-4">
@@ -137,16 +134,16 @@ export default function CompanyList() {
                         <CardTitle>{sku.sku.sku_name}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <CardDescription>Batch Number: {batchNumber}</CardDescription> {/* Display dynamic batch number */}
+                        <CardDescription>Batch Number: {batchNumber}</CardDescription>
                         <CardDescription>SKU Code: {sku.sku.sku_code}</CardDescription>
                         <CustomQuantityInput
-                          value={updatedBatches.get(sku.id) ?? 0} // Use the value from updatedBatches map
-                          onChange={(quantity) => handleQuantityChange(sku.id, quantity)} // Update the batch quantity
+                          value={updatedBatches.get(sku.id) ?? 0}
+                          onChange={(quantity) => handleQuantityChange(sku.id, quantity)}
                           className="w-full mt-2"
                         />
                         <Button
                           className="w-full mt-4"
-                          onClick={() => handleSaveBatchForSku(sku.id)} // Pass batch number when saving
+                          onClick={() => handleSaveBatchForSku(sku.id)} // Use the updated batch number here
                         >
                           Save Batch
                         </Button>

@@ -2,6 +2,7 @@
 CREATE TABLE "Company" (
     "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Company_pkey" PRIMARY KEY ("id")
 );
@@ -10,6 +11,7 @@ CREATE TABLE "Company" (
 CREATE TABLE "Sku" (
     "id" SERIAL NOT NULL,
     "sku_name" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Sku_pkey" PRIMARY KEY ("id")
 );
@@ -18,6 +20,7 @@ CREATE TABLE "Sku" (
 CREATE TABLE "BatchNum" (
     "id" SERIAL NOT NULL,
     "quantity" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "BatchNum_pkey" PRIMARY KEY ("id")
 );
@@ -27,6 +30,7 @@ CREATE TABLE "CompanySku" (
     "id" SERIAL NOT NULL,
     "company_id" INTEGER NOT NULL,
     "sku_id" INTEGER NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "CompanySku_pkey" PRIMARY KEY ("id")
 );
@@ -39,6 +43,18 @@ CREATE TABLE "CompanySkuBatchNumRelation" (
 
     CONSTRAINT "CompanySkuBatchNumRelation_pkey" PRIMARY KEY ("company_sku_id","batch_id")
 );
+
+-- CreateIndex
+CREATE INDEX "CompanySku_company_id_idx" ON "CompanySku"("company_id");
+
+-- CreateIndex
+CREATE INDEX "CompanySku_sku_id_idx" ON "CompanySku"("sku_id");
+
+-- CreateIndex
+CREATE INDEX "CompanySkuBatchNumRelation_company_sku_id_idx" ON "CompanySkuBatchNumRelation"("company_sku_id");
+
+-- CreateIndex
+CREATE INDEX "CompanySkuBatchNumRelation_batch_id_idx" ON "CompanySkuBatchNumRelation"("batch_id");
 
 -- AddForeignKey
 ALTER TABLE "CompanySku" ADD CONSTRAINT "CompanySku_company_id_fkey" FOREIGN KEY ("company_id") REFERENCES "Company"("id") ON DELETE CASCADE ON UPDATE CASCADE;

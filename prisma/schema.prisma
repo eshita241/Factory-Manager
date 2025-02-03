@@ -7,47 +7,54 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model Company {
-  id    Int    @id @default(autoincrement())
-  name  String
+  id          Int      @id @default(autoincrement())
+  name        String
+  created_at  DateTime @default(now()) // Timestamp for creation
 
   companySkus CompanySku[]
 }
 
 model Sku {
-  id       Int    @id @default(autoincrement())
-  sku_name String
+  id          Int      @id @default(autoincrement())
+  sku_name    String
+  created_at  DateTime @default(now()) // Timestamp for creation
 
   companySkus CompanySku[]
 }
 
 model BatchNum {
-  id        Int    @id @default(autoincrement())
-  quantity  Int
+  id          Int      @id @default(autoincrement())
+  quantity    Int
+  created_at  DateTime @default(now()) // Timestamp for creation
 
   companySkuBatches CompanySkuBatchNumRelation[]
 }
 
 model CompanySku {
-  id         Int    @id @default(autoincrement()) // Added an ID field for CompanySku
-  company_id Int
-  sku_id     Int
+  id          Int      @id @default(autoincrement())
+  company_id  Int
+  sku_id      Int
+  created_at  DateTime @default(now()) // Timestamp for creation
 
-  company Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
-  sku     Sku     @relation(fields: [sku_id], references: [id], onDelete: Cascade)
+  company     Company @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  sku         Sku     @relation(fields: [sku_id], references: [id], onDelete: Cascade)
 
   companySkuBatches CompanySkuBatchNumRelation[]
+
+  @@index([company_id])  // Index for company_id for faster lookups
+  @@index([sku_id])      // Index for sku_id for faster lookups
 }
 
 model CompanySkuBatchNumRelation {
   company_sku_id Int
   batch_id       Int
-  created_at     DateTime @default(now())
+  created_at     DateTime @default(now()) // Timestamp for creation
 
-  companySku CompanySku @relation(fields: [company_sku_id], references: [id])
-  batchNum   BatchNum   @relation(fields: [batch_id], references: [id])
+  companySku     CompanySku @relation(fields: [company_sku_id], references: [id])
+  batchNum       BatchNum   @relation(fields: [batch_id], references: [id])
 
-  @@id([company_sku_id, batch_id]) // Composite Primary Key
+  @@id([company_sku_id, batch_id])
+  @@index([company_sku_id])  // Index for company_sku_id for faster lookups
+  @@index([batch_id])        // Index for batch_id for faster lookups
 }
